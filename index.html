@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>KAFLIX · Filmes feitos com IA</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Cinzel:wght@700&family=Creepster&family=Fredoka:wght@600&family=Press+Start+2P&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header id="topo"></header>
+    <main class="view" id="v-inicio" hidden>
+        <section class="hero" id="hero">
+            <div class="slides"></div><canvas id="fx"></canvas>
+            <div class="hero-info"></div>
+            <button class="seta e" aria-label="Anterior">‹</button><button class="seta d"
+                aria-label="Próximo">›</button>
+            <div class="dots"></div>
+        </section>
+        <div id="fileiras"></div>
+    </main>
+    <main class="view pagina" id="v-catalogo" hidden>
+        <h1>Catálogo</h1>
+        <div class="filtros"><select id="fg" aria-label="Gênero"></select><select id="fa" aria-label="Ano"></select>
+            <select id="fo" aria-label="Ordenar">
+                <option value="pop">Mais populares</option>
+                <option value="az">A–Z</option>
+                <option value="ano">Mais recentes</option>
+            </select><span id="contagem"></span>
+        </div>
+        <div class="grade" id="grade-cat"></div>
+        <p id="vazio-cat" hidden>Nenhum filme encontrado para essa busca.</p>
+    </main>
+    <main class="view pagina" id="v-generos" hidden>
+        <h1>Gêneros</h1>
+        <p class="sub">Explore as categorias da plataforma e encontre o clima certo para a sua sessão.</p>
+        <div class="chips" id="chips"></div>
+        <div id="generos"></div>
+    </main>
+    <main class="view pagina" id="v-novidades" hidden>
+        <h1>Novidades</h1>
+        <p class="sub">Os lançamentos mais recentes e as produções que acabaram de chegar à plataforma.</p>
+        <div class="grade" id="grade-nov"></div>
+    </main>
+    <main class="view pagina" id="v-minha-lista" hidden>
+        <h1>Minha Lista</h1>
+        <p class="sub" id="cont-sub"></p>
+        <div class="grade" id="grade-lista"></div>
+        <div class="vazio-lista" id="vazio-lista" hidden>
+            <div class="ic-grande">🎬</div>
+            <h2>Sua lista está vazia</h2>
+            <p>Toque no <b>+</b> de qualquer filme para guardá-lo aqui e assistir quando quiser. Seus favoritos ficam
+                salvos neste navegador.</p><a class="btn" href="#catalogo">Explorar o catálogo</a>
+        </div>
+    </main>
+    <main class="view pagina sobre" id="v-sobre" hidden>
+        <h1>Sobre o Projeto</h1>
+        <p class="sub">Streaming de filmes produzidos com inteligência artificial.</p>
+        <div class="stats">
+            <div><b data-stat="filmes">0</b>filmes no catálogo</div>
+            <div><b data-stat="generos">0</b>gêneros em cartaz</div>
+            <div><b data-stat="efeitos">0</b>efeitos visuais únicos</div>
+        </div>
+        <section class="bloco">
+            <h2>O projeto</h2>
+            <p>A KAFLIX é uma plataforma de streaming dedicada a filmes produzidos com inteligência artificial,
+                desenvolvida como Trabalho de Conclusão de Curso (TCC) em Desenvolvimento de Sistemas e Programação. Ela
+                simula a experiência de um serviço comercial, com catálogo dinâmico, página para cada filme, player de
+                vídeo e uma identidade visual própria para cada produção.</p>
+        </section>
+        <section class="bloco">
+            <h2>Objetivos</h2>
+            <ul>
+                <li>Aplicar HTML5, CSS3 e JavaScript em um projeto completo, organizado e preparado para crescer.</li>
+                <li>Centralizar os dados dos filmes em uma única base usada por todas as páginas.</li>
+                <li>Explorar a inteligência artificial como ferramenta criativa na produção audiovisual.</li>
+                <li>Entregar uma boa experiência em computadores, tablets e celulares.</li>
+            </ul>
+        </section>
+        <section class="bloco">
+            <h2>Desenvolvimento</h2>
+            <div class="tags"><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>Canvas
+                    API</span><span>localStorage</span><span>Design responsivo</span></div>
+            <ol class="linha">
+                <li>Planejamento e identidade visual cinematográfica</li>
+                <li>Base de dados centralizada de filmes</li>
+                <li>Catálogo, pesquisa, filtros e gêneros</li>
+                <li>Efeitos e animações individuais por filme</li>
+                <li>Player, Minha Lista e testes</li>
+            </ol>
+        </section>
+        <section class="bloco">
+            <h2>Inteligência artificial nas produções</h2>
+            <p>As imagens e os vídeos das produções foram criados com apoio de ferramentas de inteligência artificial
+                generativa, que transformam ideias e descrições em cenas, personagens e atmosferas. Aqui, a IA é uma
+                ferramenta criativa: a ideia, a curadoria e a montagem final são feitas por pessoas.</p>
+        </section>
+        <p class="aviso">Projeto acadêmico, sem fins lucrativos. Nomes, personagens e marcas citados pertencem aos seus
+            respectivos titulares. Conheça os títulos no <a href="#catalogo"><u>catálogo</u></a>.</p>
+    </main>
+    <main class="view" id="v-filme" hidden>
+        <div id="detalhe"></div>
+    </main>
+    <main class="view" id="v-erro" hidden>
+        <div class="erro">
+            <h1>Página não encontrada</h1>
+            <p>O endereço que você acessou não existe nesta plataforma.</p><a class="btn" href="#inicio">Voltar ao
+                início</a>
+        </div>
+    </main>
+    <footer>KAFLIX · Projeto de TCC · Filmes produzidos com inteligência artificial</footer>
+    <script src="script.js"></script>
+</body>
+
+</html>
