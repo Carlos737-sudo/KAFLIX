@@ -117,6 +117,29 @@ const FILMES = [
         posicao: '50% 35%',
         ajuste: 'cover',
         disponivel: true
+    },
+
+    {
+        id: 'thanos',
+        adicionadoEm: '2026-11-21',
+        titulo: 'Thanos: O Multiverso da Resenha',
+        sinopse: 'O universo nunca esteve tão perto do caos. Entre as ruínas de mundos inteiros, o titã mais temido do multiverso reúne as joias do infinito e faz a sua escolha.',
+        genero: ['Ficção científica', 'Ação'],
+        ano: 2026,
+        classificacao: '12',
+        capa: 'imagens/banners/thanos.jpeg',
+        banner: 'imagens/banners/thanos.jpeg',
+        cenario: 'imagens/banners/thanos.jpeg',
+        video: 'videos/thanos.mp4',
+        duracao: '13 s',
+        corPrincipal: '#d4a63a',
+        corSecundaria: '#4a2a63',
+        efeito: 'magia',
+        fonte: "'Cinzel',serif",
+        popularidade: 96,
+        posicao: '50% 50%',
+        ajuste: 'cover',
+        disponivel: true
     }
 ];
 
