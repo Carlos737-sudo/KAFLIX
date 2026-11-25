@@ -1492,3 +1492,361 @@ body {
 [hidden] {
     display: none !important;
 }
+
+
+/* =========================================================
+   KARFLIX · página secreta "A Bruxa de 71"
+   Tudo fica dentro de #segredo-bruxa (classes sb-*) e só
+   aparece quando a seção é aberta pelo script.js.
+   ========================================================= */
+
+#segredo-bruxa {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    outline: none;
+}
+
+#segredo-bruxa[hidden] {
+    display: none;
+}
+
+/* A Bruxa de 71 · página secreta do KARFLIX */
+#segredo-bruxa {
+    --noite: #07071a;
+    --azul: #2c4fd6;
+    --ambar: #f2a93b;
+    --tijolo: #8a2f22;
+    --renda: #f4ecd8;
+    --titulo: 'IM Fell French Canon', Georgia, 'Times New Roman', serif;
+    --texto: 'Josefin Sans', system-ui, 'Segoe UI', sans-serif;
+}
+
+#segredo-bruxa * {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+#segredo-bruxa {
+    background: var(--noite);
+    color: var(--renda);
+    font: 300 1rem/1.6 var(--texto);
+    overflow-x: hidden;
+}
+
+/* ---- Cenário: o próprio cartaz, desfocado e tingido de noite ---- */
+#segredo-bruxa .sb-fundo {
+    position: fixed;
+    inset: -8%;
+    background: center/cover no-repeat;
+    filter: blur(46px) saturate(1.15) brightness(.55);
+    z-index: 0;
+}
+
+#segredo-bruxa .sb-fundo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(60% 50% at 50% 50%, #f2a93b33, transparent 75%),
+        linear-gradient(180deg, #0a0d4aaa, #05051ad9);
+}
+
+#segredo-bruxa .sb-nevoa i {
+    position: fixed;
+    left: -20vw;
+    bottom: -12vh;
+    width: 140vw;
+    height: 52vh;
+    background: radial-gradient(closest-side, #9fb2ff26, transparent);
+    animation: sb-deriva 42s ease-in-out infinite alternate;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#segredo-bruxa .sb-nevoa i+i {
+    bottom: 22vh;
+    height: 40vh;
+    opacity: .6;
+    animation-duration: 58s;
+    animation-direction: alternate-reverse;
+}
+
+#segredo-bruxa .sb-brasas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#segredo-bruxa .sb-grao {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    opacity: .09;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- Palco ---- */
+#segredo-bruxa .sb-palco {
+    position: relative;
+    z-index: 4;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 3vh, 28px);
+    padding: calc(5vh + env(safe-area-inset-top, 0px)) 5vw calc(5vh + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    overflow-x: hidden;
+    overflow-x: clip;
+}
+
+#segredo-bruxa .sb-titulo {
+    font: 400 clamp(2.7rem, 8vw, 6.4rem)/1 var(--titulo);
+    letter-spacing: .04em;
+    color: var(--renda);
+    text-shadow: 0 0 30px #f2a93b70, 0 3px 0 #000;
+    animation: sb-titulo 2.2s .5s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+#segredo-bruxa .sb-cartaz {
+    position: relative;
+    width: min(88vw, calc(58vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    border-radius: 3px;
+    box-shadow:
+        0 0 0 1px #f2a93b66,
+        0 0 0 9px var(--noite),
+        0 0 0 10px #f2a93b33,
+        0 34px 90px #000;
+    transform: perspective(1200px) rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg));
+    transition: transform .3s ease-out;
+}
+
+#segredo-bruxa .sb-cartaz::before {
+    content: "";
+    position: absolute;
+    inset: -9%;
+    z-index: -1;
+    background: radial-gradient(closest-side, #f2a93b66, transparent);
+    filter: blur(34px);
+    animation: sb-lampiao 5.5s ease-in-out infinite;
+}
+
+#segredo-bruxa .sb-cartaz::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 100px #000b;
+    pointer-events: none;
+}
+
+#segredo-bruxa .sb-cartaz img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: sb-revelar 2.2s .2s both;
+}
+
+#segredo-bruxa .sb-brilho {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 25%), #fff9, transparent 50%);
+}
+
+#segredo-bruxa .sb-frase {
+    max-width: 34ch;
+    font: italic 400 clamp(1.15rem, 2.6vw, 1.7rem)/1.4 var(--titulo);
+    color: var(--renda);
+    animation: sb-surgir 1.4s 1.7s both;
+}
+
+#segredo-bruxa .sb-rodape {
+    font-size: .86rem;
+    letter-spacing: .06em;
+    color: #f4ecd899;
+    animation: sb-surgir 1.4s 2.3s both;
+}
+
+/* ---- Retorno discreto ---- */
+#segredo-bruxa .sb-voltar {
+    position: fixed;
+    top: calc(3.4vh + env(safe-area-inset-top, 0px));
+    left: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 max(4vw, 14px);
+    font-size: .88rem;
+    color: var(--renda);
+    text-decoration: none;
+    opacity: .5;
+    animation: sb-surgir 1.2s 2.6s backwards;
+    --alvo: .5;
+    transition: color .2s;
+}
+
+#segredo-bruxa .sb-voltar:hover,
+#segredo-bruxa .sb-voltar:focus-visible {
+    color: var(--ambar);
+    opacity: 1;
+}
+
+#segredo-bruxa .sb-voltar:focus-visible {
+    outline: 2px solid var(--ambar);
+    outline-offset: -6px;
+}
+
+/* ---- Barras de cinema (abrem na entrada) ---- */
+#segredo-bruxa .sb-barra {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 3.4vh;
+    background: #000;
+    z-index: 10;
+    pointer-events: none;
+}
+
+#segredo-bruxa .sb-barra.t {
+    top: 0;
+    animation: sb-abrirT 1.6s .2s cubic-bezier(.7, 0, .2, 1) backwards;
+}
+
+#segredo-bruxa .sb-barra.b {
+    bottom: 0;
+    animation: sb-abrirB 1.6s .2s cubic-bezier(.7, 0, .2, 1) backwards;
+}
+
+/* ---- Luz da porta (continuação da transição da página principal) ---- */
+#segredo-bruxa .sb-luz {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 52%, #fff0c2 0, #f5b445 38%, #8a4a14 100%);
+    animation: sb-apagar 1.5s .1s ease-in forwards;
+}
+
+/* ---- Animações ---- */
+@keyframes sb-apagar {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@keyframes sb-revelar {
+    from {
+        filter: brightness(2.4) saturate(.3) blur(10px);
+    }
+}
+
+@keyframes sb-titulo {
+    from {
+        opacity: 0;
+        transform: scale(1.14);
+        filter: blur(14px);
+    }
+}
+
+@keyframes sb-surgir {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: var(--alvo, 1);
+        transform: none;
+    }
+}
+
+@keyframes sb-lampiao {
+
+    0%,
+    100% {
+        opacity: .55;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes sb-deriva {
+    to {
+        transform: translateX(14vw);
+    }
+}
+
+@keyframes sb-abrirT {
+    from {
+        height: 30vh;
+    }
+}
+
+@keyframes sb-abrirB {
+    from {
+        height: 30vh;
+    }
+}
+
+/* ---- Celular em pé: enquadra a personagem e a porta 71 ---- */@media (max-width: 640px) and (orientation: portrait) {
+#segredo-bruxa .sb-cartaz {
+        width: 86vw;
+        aspect-ratio: 4 / 5;
+    }
+
+#segredo-bruxa .sb-cartaz img {
+        object-position: 64% 50%;
+    }
+
+#segredo-bruxa .sb-brilho {
+        display: none;
+    }
+
+
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+#segredo-bruxa .sb-titulo {
+        font-size: 2.2rem;
+    }
+
+#segredo-bruxa .sb-cartaz {
+        width: min(60vw, calc(56vh * 16 / 9));
+    }
+
+#segredo-bruxa .sb-rodape {
+        display: none;
+    }
+
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+#segredo-bruxa *,
+#segredo-bruxa *::before,
+#segredo-bruxa *::after {
+        animation-duration: .01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition: none !important;
+    }
+
+
+}
