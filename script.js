@@ -1387,3 +1387,441 @@ document.addEventListener('click', e => {
 addEventListener('hashchange', rotear);
 
 rotear();
+
+/* =========================================================
+   KARFLIX · segredo: 7 cliques seguidos no logotipo abrem a
+   porta do 71 e levam à página secreta (#bruxa-de-71).
+   Só conta cliques no logotipo do topo. Não altera nenhum
+   comportamento do site: o logotipo continua levando ao início.
+   ========================================================= */
+
+(() => {
+    const ALVO = 7;                       // cliques necessários
+    const JANELA = 1500;                  // ms máximos entre um clique e o próximo
+    const ROTA = 'bruxa-de-71';           // endereço da página secreta: index.html#bruxa-de-71
+    const CARTAZ = 'imagens/banners/bruxa-do-71.png';
+
+    let n = 0;
+    let ultimo = 0;
+    let trava = false;
+    let teclaRepetida = false;
+    let timer = null;
+    let limpaFx = null;
+    let apertado = null;
+
+    const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const AMBAR = '#f2a93b';
+    const AZUL = '#6f8cff';
+
+    const CSS = `
+.kf-porta{position:fixed;inset:0;z-index:2147483000;display:flex;perspective:1400px;overflow:hidden;
+  background:#05050f;opacity:0;animation:kf-in .5s ease-out forwards}
+.kf-luz{position:absolute;inset:0;background:radial-gradient(circle at 50% 52%,#fff0c2 0,#f5b445 38%,#8a4a14 100%);
+  animation:kf-brilha 1.7s .45s ease-in forwards}
+.kf-folha{position:relative;flex:1;overflow:hidden;backface-visibility:hidden;
+  background:
+    linear-gradient(90deg,#0000 0,#0000 88%,#0007 100%),
+    repeating-linear-gradient(90deg,#0000 0 11.5%,#0006 11.5% 12.5%),
+    linear-gradient(180deg,#7a4125,#4a2616 60%,#2f170c)}
+.kf-folha::after{content:"71";position:absolute;top:50%;font:700 min(34vw,46vh)/1 Georgia,'Times New Roman',serif;
+  color:#f4ecd8;text-shadow:0 4px 0 #0008,0 0 40px #0006}
+.kf-e{transform-origin:0 50%;animation:kf-abre-e 1.25s .5s cubic-bezier(.7,0,.25,1) forwards}
+.kf-d{transform-origin:100% 50%;animation:kf-abre-d 1.25s .5s cubic-bezier(.7,0,.25,1) forwards}
+.kf-e::after{right:0;transform:translate(50%,-50%)}
+.kf-d::after{left:0;transform:translate(-50%,-50%)}
+@keyframes kf-in{to{opacity:1}}
+@keyframes kf-abre-e{to{transform:rotateY(100deg)}}
+@keyframes kf-abre-d{to{transform:rotateY(-100deg)}}
+@keyframes kf-brilha{from{filter:brightness(.7)}to{filter:brightness(1.12)}}
+@media (prefers-reduced-motion:reduce){.kf-porta{animation-duration:.01ms}.kf-luz,.kf-folha{animation:none}.kf-folha{display:none}}
+`;
+
+    const limpar = () => {
+        document.querySelectorAll('.kf-porta, #kf-estilo, #kf-fx').forEach(e => e.remove());
+        document.documentElement.style.overflow = '';
+        clearTimeout(timer);
+        trava = false;
+        n = 0;
+    };
+
+    function abrir() {
+        trava = true;
+
+        const css = document.createElement('style');
+        css.id = 'kf-estilo';
+        css.textContent = CSS;
+        document.head.append(css);
+
+        const porta = document.createElement('div');
+        porta.className = 'kf-porta';
+        porta.setAttribute('aria-hidden', 'true');
+        porta.innerHTML = '<i class="kf-luz"></i><div class="kf-folha kf-e"></div><div class="kf-folha kf-d"></div>';
+
+        document.body.append(porta);
+        document.documentElement.style.overflow = 'hidden';
+
+        const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        timer = setTimeout(() => { location.hash = ROTA; setTimeout(() => { if (!aberta) limpar(); }, 1500); }, calmo ? 500 : 2150);
+    }
+
+    // ---------- Efeitos de aperto: crescem a cada clique ----------
+
+    function camada() {
+        let c = document.getElementById('kf-fx');
+
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'kf-fx';
+            c.setAttribute('aria-hidden', 'true');
+            c.style.cssText = 'position:fixed;inset:0;z-index:2147482500;pointer-events:none;overflow:hidden';
+            document.body.append(c);
+        }
+
+        clearTimeout(limpaFx);
+        limpaFx = setTimeout(() => c.remove(), 1500);
+
+        return c;
+    }
+
+    // anel de luz que se expande a partir do logotipo
+    function onda(c, x, y, cor, tam, atraso = 0) {
+        const o = document.createElement('i');
+
+        o.style.cssText = `position:absolute;left:${x - 12}px;top:${y - 12}px;width:24px;height:24px;border-radius:50%;` +
+            `border:2px solid ${cor};box-shadow:0 0 14px ${cor},inset 0 0 10px ${cor};opacity:0`;
+        c.append(o);
+
+        o.animate(
+            [{ transform: 'scale(.4)' }, { transform: `scale(${tam})` }],
+            { duration: 700, delay: atraso, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' }
+        );
+        o.animate(
+            [{ opacity: .95 }, { opacity: .6, offset: .45 }, { opacity: 0 }],
+            { duration: 700, delay: atraso, fill: 'forwards' }
+        );
+    }
+
+    // faíscas douradas e azuis
+    function fagulhas(c, x, y, qtd, alcance) {
+        for (let i = 0; i < qtd; i++) {
+            const ang = Math.random() * Math.PI * 2;
+            const dist = alcance * (.35 + Math.random() * .65);
+            const r = 2 + Math.random() * 3;
+            const cor = Math.random() < .28 ? AZUL : AMBAR;
+            const f = document.createElement('i');
+
+            f.style.cssText = `position:absolute;left:${x - r}px;top:${y - r}px;width:${r * 2}px;height:${r * 2}px;` +
+                `border-radius:50%;background:${cor};box-shadow:0 0 ${r * 3}px ${cor};opacity:0`;
+            c.append(f);
+
+            const dur = 600 + Math.random() * 600;
+
+            f.animate(
+                [
+                    { transform: 'translate(0,0) scale(1)' },
+                    { transform: `translate(${Math.cos(ang) * dist}px,${Math.sin(ang) * dist + 24}px) scale(.3)` }
+                ],
+                { duration: dur, easing: 'cubic-bezier(.1,.7,.3,1)', fill: 'forwards' }
+            );
+            f.animate(
+                [{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }],
+                { duration: dur, fill: 'forwards' }
+            );
+        }
+    }
+
+    // bordas da tela escurecem, como se a luz da vila baixasse
+    function escurecer(c, forca) {
+        const v = document.createElement('div');
+
+        v.style.cssText = 'position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at 50% 40%,transparent 38%,rgba(6,8,50,.9) 100%)';
+        c.append(v);
+
+        v.animate(
+            [{ opacity: 0 }, { opacity: forca }, { opacity: forca * .55 }, { opacity: 0 }],
+            { duration: 900, fill: 'forwards' }
+        );
+    }
+
+    // clarão dourado nos últimos cliques
+    function clarao(c) {
+        const v = document.createElement('div');
+
+        v.style.cssText = 'position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 25%,rgba(255,226,160,.6),transparent 70%)';
+        c.append(v);
+
+        v.animate([{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }], { duration: 380, fill: 'forwards' });
+    }
+
+    function logoReage(logo, nivel) {
+        if (!logo.animate) return;
+
+        // brilho do logotipo (único efeito para quem prefere menos movimento)
+        logo.animate(
+            [
+                { filter: `drop-shadow(0 0 ${6 + nivel * 4}px ${AMBAR}) brightness(${1 + nivel * .1})` },
+                { filter: 'none' }
+            ],
+            { duration: 520, easing: 'ease-out' }
+        );
+
+        if (calmo) return;
+
+        // mola: o logotipo volta do aperto e, nos últimos cliques, treme
+        const t = nivel >= 4 ? nivel * .5 : 0;
+
+        logo.animate(
+            [
+                { transform: 'scale(.9)' },
+                { transform: `translate(${-t}px,${t / 2}px) scale(${1.06 + nivel * .012})` },
+                { transform: `translate(${t}px,${-t / 2}px) scale(1.02)` },
+                { transform: 'translate(0,0) scale(1)' }
+            ],
+            { duration: 340, easing: 'ease-out' }
+        );
+    }
+
+    function efeito(logo, nivel) {
+        logoReage(logo, nivel);
+
+        if (calmo) return;
+
+        const r = logo.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        const c = camada();
+
+        onda(c, x, y, AMBAR, 3 + nivel * .9);
+        if (nivel >= 5) onda(c, x, y, AZUL, 5 + nivel, 120);
+        if (nivel >= 2) fagulhas(c, x, y, 3 + nivel * 4, 50 + nivel * 28);
+        if (nivel >= 3) escurecer(c, Math.min(.12 * nivel, .8));
+        if (nivel >= 6) clarao(c);
+    }
+
+    // Evita contar a tecla Enter segurada no logotipo
+    addEventListener('keydown', e => { teclaRepetida = e.repeat; }, true);
+
+    // Enquanto está apertando: o logotipo afunda e acende
+    addEventListener('pointerdown', e => {
+        const logo = e.target.closest && e.target.closest('#topo .logo');
+
+        if (!logo || trava || calmo || !logo.animate) return;
+
+        apertado = logo.animate(
+            [
+                { transform: 'scale(1)', filter: 'none' },
+                { transform: 'scale(.9)', filter: `drop-shadow(0 0 8px ${AMBAR})` }
+            ],
+            { duration: 90, fill: 'forwards' }
+        );
+    }, true);
+
+    const soltar = () => {
+        if (apertado) {
+            apertado.cancel();
+            apertado = null;
+        }
+    };
+
+    addEventListener('pointerup', soltar, true);
+    addEventListener('pointercancel', soltar, true);
+
+    document.addEventListener('click', e => {
+        const logo = e.target.closest && e.target.closest('#topo .logo');
+
+        if (!logo || trava) return;
+        if (e.detail === 0 && teclaRepetida) return;
+
+        const agora = Date.now();
+
+        n = agora - ultimo > JANELA ? 1 : n + 1;
+        ultimo = agora;
+
+        if (n === 4) { new Image().src = CARTAZ; fontes(); }   // aquece o cache só quando há intenção
+
+        efeito(logo, n);
+
+        if (n === ALVO) {
+            e.preventDefault();
+            abrir();
+        }
+    }, true);
+
+    // Voltar pelo navegador não pode trazer a transição de volta
+    addEventListener('pageshow', e => { if (e.persisted) limpar(); });
+
+    // ================= Página secreta: A Bruxa de 71 =================
+    // O HTML fica em <section id="segredo-bruxa"> (index.html) e o CSS em
+    // style.css (classes sb-*). Aqui só abrimos e fechamos a seção, pela rota
+    // #bruxa-de-71 do roteador do site. Assim funciona ao atualizar a página.
+
+    const sec = document.getElementById('segredo-bruxa');
+    const FONTES = 'https://fonts.googleapis.com/css2?family=IM+Fell+French+Canon:ital@0;1&family=Josefin+Sans:wght@300;400&display=swap';
+
+    let aberta = false;
+    let raf = 0;
+    let brasas = [];
+    let sprites = null;
+    let largura = 0;
+    let altura = 0;
+
+    // as fontes da página secreta só são baixadas por quem chega perto do segredo
+    function fontes() {
+        if (document.getElementById('kf-fontes')) return;
+
+        const l = document.createElement('link');
+        l.id = 'kf-fontes';
+        l.rel = 'stylesheet';
+        l.href = FONTES;
+        document.head.append(l);
+    }
+
+    function sprite(cor) {
+        const s = document.createElement('canvas');
+        s.width = s.height = 32;
+
+        const g = s.getContext('2d');
+        const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+
+        r.addColorStop(0, cor + 'ff');
+        r.addColorStop(.35, cor + '88');
+        r.addColorStop(1, cor + '00');
+
+        g.fillStyle = r;
+        g.fillRect(0, 0, 32, 32);
+
+        return s;
+    }
+
+    function medir() {
+        const c = sec.querySelector('.sb-brasas');
+        const d = Math.min(devicePixelRatio || 1, 1.5);
+
+        largura = innerWidth;
+        altura = innerHeight;
+        c.width = largura * d;
+        c.height = altura * d;
+        c.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+    }
+
+    function nova(sorteia = true) {
+        return {
+            x: Math.random() * largura,
+            y: sorteia ? Math.random() * altura : altura + 10,
+            r: 3 + Math.random() * 7,
+            vy: .12 + Math.random() * .35,
+            vx: (Math.random() - .5) * .25,
+            f: Math.random() * 6.28,
+            sp: Math.random() < .25 ? sprites.azul : sprites.ambar
+        };
+    }
+
+    // brasas e faíscas azuis (canvas leve; só roda com a página aberta)
+    function iniciarBrasas() {
+        const x = sec.querySelector('.sb-brasas').getContext('2d');
+
+        if (!sprites) sprites = { ambar: sprite('#f2a93b'), azul: sprite('#6f8cff') };
+
+        medir();
+        brasas = Array.from({ length: innerWidth < 700 ? 22 : 44 }, () => nova());
+
+        const quadro = () => {
+            x.clearRect(0, 0, largura, altura);
+
+            for (const p of brasas) {
+                p.y -= p.vy;
+                p.f += .02;
+                p.x += p.vx + Math.sin(p.f) * .25;
+
+                if (p.y < -10) Object.assign(p, nova(false));
+
+                x.globalAlpha = .35 + .5 * Math.abs(Math.sin(p.f * 1.3));
+                x.drawImage(p.sp, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+            }
+
+            x.globalAlpha = 1;
+        };
+
+        addEventListener('resize', medir);
+
+        if (calmo) {
+            quadro();
+            return;
+        }
+
+        const laco = () => {
+            if (!document.hidden) quadro();
+            raf = requestAnimationFrame(laco);
+        };
+
+        laco();
+    }
+
+    function pararBrasas() {
+        cancelAnimationFrame(raf);
+        removeEventListener('resize', medir);
+    }
+
+    function fecharSegredo() {
+        if (!aberta) return;
+
+        aberta = false;
+        sec.hidden = true;
+        pararBrasas();
+        document.documentElement.style.overflow = '';
+    }
+
+    // o roteador chama esta função quando o endereço é #bruxa-de-71
+    // e guarda o retorno para chamar quando a rota mudar
+    function abrirSegredo() {
+        if (!sec || aberta) return fecharSegredo;
+
+        aberta = true;
+        fontes();
+
+        const img = sec.querySelector('.sb-cartaz img');
+        const url = img.dataset.src;
+
+        if (!img.getAttribute('src')) img.src = url;     // o cartaz só é pedido aqui
+        sec.querySelector('.sb-fundo').style.backgroundImage = `url("${url}")`;
+
+        sec.hidden = false;
+        sec.scrollTop = 0;
+        iniciarBrasas();
+
+        limpar();                                        // a luz do segredo já cobre a tela: tira a porta
+        document.documentElement.style.overflow = 'hidden';
+        sec.focus({ preventScroll: true });
+
+        return fecharSegredo;
+    }
+
+    if (sec && typeof INICIAR !== 'undefined') {
+        INICIAR[ROTA] = abrirSegredo;
+
+        // acessado direto (ou atualizado) em index.html#bruxa-de-71
+        if (location.hash.slice(1) === ROTA && typeof rotear === 'function') rotear();
+    }
+
+    // Esc volta para o KARFLIX
+    addEventListener('keydown', e => {
+        if (aberta && e.key === 'Escape') location.hash = 'inicio';
+    });
+
+    // brilho que segue o mouse e inclina o cartaz de leve (só com mouse)
+    if (sec && !calmo) {
+        sec.addEventListener('pointermove', e => {
+            if (e.pointerType !== 'mouse') return;
+
+            const c = sec.querySelector('.sb-cartaz');
+            const nx = e.clientX / innerWidth;
+            const ny = e.clientY / innerHeight;
+
+            c.style.setProperty('--rx', ((nx - .5) * 5).toFixed(2) + 'deg');
+            c.style.setProperty('--ry', ((.5 - ny) * 3.5).toFixed(2) + 'deg');
+            c.style.setProperty('--mx', (nx * 100).toFixed(0) + '%');
+            c.style.setProperty('--my', (ny * 100).toFixed(0) + '%');
+        });
+    }
+})();
