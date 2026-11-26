@@ -1336,10 +1336,12 @@ addEventListener('hashchange', rotear);
 rotear();
 
 /* =========================================================
-   KARFLIX · segredo: 7 cliques seguidos no logotipo abrem a
-   porta do 71 e levam à página secreta (#bruxa-de-71).
-   Só conta cliques no logotipo do topo. Não altera nenhum
-   comportamento do site: o logotipo continua levando ao início.
+   KARFLIX · página secreta da Bruxa de 71 (#bruxa-de-71) e a
+   transição da "porta do 71".
+   A CONTAGEM de cliques no logotipo (agora 10 cliques, com
+   animações e mensagens) fica no bloco EASTER EGGS, no fim deste arquivo, que chama
+   window.KARFLIX_PORTA() no 10º clique. Este bloco só guarda a
+   porta, a página secreta e o aquecimento de cache.
    ========================================================= */
 
 (() => {
@@ -1546,54 +1548,14 @@ rotear();
         if (nivel >= 6) clarao(c);
     }
 
-    // Evita contar a tecla Enter segurada no logotipo
-    addEventListener('keydown', e => { teclaRepetida = e.repeat; }, true);
+    // ---------- Ganchos usados pelo bloco EASTER EGGS (no fim deste arquivo) ----------
+    // (a contagem antiga de 7 cliques foi substituída pela sequência de 10 cliques)
 
-    // Enquanto está apertando: o logotipo afunda e acende
-    addEventListener('pointerdown', e => {
-        const logo = e.target.closest && e.target.closest('#topo .logo');
+    // Inicia a transição da porta; no fim dela o hash vira #bruxa-de-71
+    window.KARFLIX_PORTA = () => { if (!trava) abrir(); };
 
-        if (!logo || trava || calmo || !logo.animate) return;
-
-        apertado = logo.animate(
-            [
-                { transform: 'scale(1)', filter: 'none' },
-                { transform: 'scale(.9)', filter: `drop-shadow(0 0 8px ${AMBAR})` }
-            ],
-            { duration: 90, fill: 'forwards' }
-        );
-    }, true);
-
-    const soltar = () => {
-        if (apertado) {
-            apertado.cancel();
-            apertado = null;
-        }
-    };
-
-    addEventListener('pointerup', soltar, true);
-    addEventListener('pointercancel', soltar, true);
-
-    document.addEventListener('click', e => {
-        const logo = e.target.closest && e.target.closest('#topo .logo');
-
-        if (!logo || trava) return;
-        if (e.detail === 0 && teclaRepetida) return;
-
-        const agora = Date.now();
-
-        n = agora - ultimo > JANELA ? 1 : n + 1;
-        ultimo = agora;
-
-        if (n === 4) { new Image().src = CARTAZ; fontes(); }   // aquece o cache só quando há intenção
-
-        efeito(logo, n);
-
-        if (n === ALVO) {
-            e.preventDefault();
-            abrir();
-        }
-    }, true);
+    // Aquece cartaz e fontes da página secreta quando há intenção
+    window.KARFLIX_AQUECER = () => { new Image().src = CARTAZ; fontes(); };
 
     // Voltar pelo navegador não pode trazer a transição de volta
     addEventListener('pageshow', e => { if (e.persisted) limpar(); });
@@ -1771,4 +1733,890 @@ rotear();
             c.style.setProperty('--my', (ny * 100).toFixed(0) + '%');
         });
     }
+})();
+
+
+/* ==========================================================
+   >>> A PARTIR DAQUI: EASTER EGGS (antigo segredos.js)
+   Precisa ficar depois de tudo acima (roteador e telas).
+   ========================================================== */
+
+/* =========================================================
+   KARFLIX · EASTER EGGS
+
+   Fica no FINAL deste arquivo, depois do roteador. Não altera
+   o roteador nem os dados: só escuta cliques e o evento
+   "hashchange" do próprio site. O CSS está em style.css, na
+   seção "EASTER EGGS" (classes kx-*).
+
+   EGG 1 · Título "KARFLIX" (#topo .logo)
+     1º lampejo · 2º sussurro · 3º glitch · 4º alerta de vírus
+     5º glitch forte · 6º alerta de corrupção · 7º e 8º tensão
+     9º "Você foi avisado." · 10º abre a Bruxa de 71
+     (a porta e a página #bruxa-de-71 já existiam no script.js)
+
+   EGG 2 · "Sobre o Projeto" (menu do topo e navegação inferior)
+     5 cliques desbloqueiam em silêncio. O vídeo só aparece na
+     PRÓXIMA navegação interna (mudança de hash), uma vez por sessão.
+
+   Tudo é visual: nada aqui altera o dispositivo do visitante.
+   ========================================================= */
+
+(() => {
+    'use strict';
+
+    // ---------- Configuração (ajuste aqui) ----------
+
+    const EGG1 = {
+        ALVO: 10,            // cliques para abrir a Bruxa de 71
+        PAUSA_MAX: 6000,     // ms parado: depois disso a contagem recomeça
+        ROTA: 'bruxa-de-71'  // mesma rota criada no script.js
+    };
+
+    const EGG2 = {
+        ALVO: 5,                 // cliques em "Sobre o Projeto"
+        PAUSA_MAX: 3500,         // ms entre cliques seguidos
+        VIDEO: 'videos/segredo.mp4',   // arquivo do vídeo secreto (pasta videos/)
+        ATRASO: 450              // ms após a navegação até a tela especial
+    };
+
+    // chaves do sessionStorage (somem ao fechar a aba)
+    const K = {
+        desbloqueado: 'karflix:egg2:desbloqueado',
+        exibido: 'karflix:egg2:exibido',
+        base: 'karflix:egg2:base',     // página em que o 5º clique terminou
+        mudo: 'karflix:egg1:mudo'
+    };
+
+    // ---------- Utilidades ----------
+
+    // sessionStorage com plano B em memória (modo privado / storage bloqueado)
+    const memoria = {};
+
+    const sessao = {
+        ler(k) {
+            try {
+                const v = sessionStorage.getItem(k);
+                return v === null ? (memoria[k] ?? null) : v;
+            } catch (_) {
+                return memoria[k] ?? null;
+            }
+        },
+        gravar(k, v) {
+            memoria[k] = v;
+            try { sessionStorage.setItem(k, v); } catch (_) { /* segue só em memória */ }
+        }
+    };
+
+    const calmo = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const rotaAtual = () => location.hash.slice(1) || 'inicio';
+    const sorteio = (a, b) => a + Math.random() * (b - a);
+
+    const criar = (tag, classe, texto) => {
+        const e = document.createElement(tag);
+        if (classe) e.className = classe;
+        if (texto) e.textContent = texto;
+        return e;
+    };
+
+    // Web Animations com plano B; remove o elemento ao terminar (se pedido)
+    function anima(el, quadros, opcoes, remover) {
+        if (!el.animate) {
+            if (remover) el.remove();
+            return null;
+        }
+
+        const a = el.animate(quadros, opcoes);
+
+        if (remover) a.onfinish = a.oncancel = () => el.remove();
+
+        return a;
+    }
+
+    // Enter segurado no teclado gera vários "clicks": conta só o primeiro
+    let teclaRepetida = false;
+    addEventListener('keydown', e => { teclaRepetida = e.repeat; }, true);
+    const cliqueRepetido = e => e.detail === 0 && teclaRepetida;
+
+    const comModificador = e => e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button > 0;
+
+    // Estado compartilhado para os dois segredos não se atropelarem
+    const estado = {
+        video: false,            // tela do vídeo aberta
+        suspenso: () => false    // sequência do título em andamento (definido no Egg 1)
+    };
+
+    // ---------- Efeitos sonoros (Web Audio, sintetizados, baixos) ----------
+    // Só tocam depois de um clique do visitante e podem ser silenciados
+    // pelo botão que aparece junto com os efeitos (fica salvo na sessão).
+
+    const som = (() => {
+        let ctx = null;
+
+        const ligado = () => sessao.ler(K.mudo) !== '1';
+
+        function audio() {
+            try {
+                if (!ctx) {
+                    const C = window.AudioContext || window.webkitAudioContext;
+                    if (!C) return null;
+                    ctx = new C();
+                }
+                if (ctx.state === 'suspended') ctx.resume();
+                return ctx;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function tom(freq, dur, vol, tipo, queda) {
+            if (!ligado()) return;
+
+            const a = audio();
+            if (!a) return;
+
+            const t = a.currentTime;
+            const o = a.createOscillator();
+            const g = a.createGain();
+
+            o.type = tipo || 'sine';
+            o.frequency.setValueAtTime(freq, t);
+            if (queda) o.frequency.exponentialRampToValueAtTime(queda, t + dur);
+
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+            o.connect(g);
+            g.connect(a.destination);
+            o.start(t);
+            o.stop(t + dur + 0.05);
+        }
+
+        function ruido(dur, vol) {
+            if (!ligado()) return;
+
+            const a = audio();
+            if (!a) return;
+
+            const n = Math.floor(a.sampleRate * dur);
+            const buf = a.createBuffer(1, n, a.sampleRate);
+            const d = buf.getChannelData(0);
+
+            for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+
+            const s = a.createBufferSource();
+            const g = a.createGain();
+
+            s.buffer = buf;
+            g.gain.value = vol;
+            s.connect(g);
+            g.connect(a.destination);
+            s.start();
+        }
+
+        return {
+            ligado,
+            batida() { tom(70, .22, .2, 'sine', 40); setTimeout(() => tom(62, .2, .14, 'sine', 36), 170); },
+            glitch() { ruido(.25, .06); tom(220, .18, .035, 'sawtooth', 90); },
+            alerta() { tom(880, .12, .04, 'square'); setTimeout(() => tom(660, .18, .04, 'square'), 140); },
+            grave() { tom(55, 1.6, .1, 'sawtooth', 38); }
+        };
+    })();
+
+
+    /* =====================================================
+       EGG 1 · título KARFLIX → 10 cliques → Bruxa de 71
+       ===================================================== */
+
+    const susto = (() => {
+        const ALVO_SEL = '#topo .logo';
+        const GLIFOS = '█▓▒░#@%&$?!/\\<>';
+
+        let n = 0;               // cliques seguidos
+        let ultimo = 0;          // instante do último clique
+        let travado = false;     // porta abrindo: ignora novos cliques
+        let idle = null;         // reinicia a contagem após pausa
+        let camadaEl = null;     // contêiner dos efeitos (#kx-fx)
+        let msgEl = null;        // mensagem atual
+        let msgTimer = null;
+        let raf = 0;
+
+        estado.suspenso = () => n > 0 || travado;
+
+        // ---- Camada de efeitos (não bloqueia cliques: pointer-events:none) ----
+
+        function camada() {
+            if (camadaEl && camadaEl.isConnected) return camadaEl;
+
+            const c = criar('div');
+            c.id = 'kx-fx';
+            c.innerHTML = `
+                <div class="kx-vinheta" aria-hidden="true"></div>
+                <div class="kx-linhas" aria-hidden="true"></div>
+                <div class="kx-barra kx-t" aria-hidden="true"></div>
+                <div class="kx-barra kx-b" aria-hidden="true"></div>
+                <button type="button" class="kx-som"></button>
+            `;
+
+            const btn = c.querySelector('.kx-som');
+            const atualiza = () => {
+                const on = som.ligado();
+                btn.textContent = on ? '🔊' : '🔇';
+                btn.setAttribute('aria-label', on ? 'Silenciar efeitos sonoros' : 'Ativar efeitos sonoros');
+            };
+
+            atualiza();
+            btn.addEventListener('click', () => {
+                sessao.gravar(K.mudo, som.ligado() ? '1' : '0');
+                atualiza();
+            });
+
+            document.body.append(c);
+            camadaEl = c;
+
+            return c;
+        }
+
+        function removerCamada() {
+            clearTimeout(msgTimer);
+            cancelAnimationFrame(raf);
+            msgEl = null;
+
+            const c = camadaEl;
+            camadaEl = null;
+
+            if (!c) return;
+
+            c.classList.add('kx-saindo');
+            setTimeout(() => c.remove(), 650);
+        }
+
+        function reiniciar() {
+            if (travado) return;
+
+            n = 0;
+            removerCamada();
+        }
+
+        // ---- Mensagens ----
+
+        // texto "decodificando": letras embaralhadas se resolvendo da esquerda p/ direita
+        function decodificar(el, texto) {
+            if (calmo()) {
+                el.textContent = texto;
+                return;
+            }
+
+            const dur = Math.min(900, 300 + texto.length * 18);
+            const ini = performance.now();
+
+            const passo = agora => {
+                const p = Math.min(1, (agora - ini) / dur);
+                const fixos = Math.floor(texto.length * p);
+                let out = '';
+
+                for (let i = 0; i < texto.length; i++) {
+                    const ch = texto[i];
+                    out += (i < fixos || ch === ' ')
+                        ? ch
+                        : GLIFOS[(Math.random() * GLIFOS.length) | 0];
+                }
+
+                el.textContent = out;
+
+                if (p < 1) raf = requestAnimationFrame(passo);
+            };
+
+            raf = requestAnimationFrame(passo);
+        }
+
+        // some com a mensagem atual (fade rápido; imediato = sem fade)
+        function limparMensagem(imediato) {
+            clearTimeout(msgTimer);
+            cancelAnimationFrame(raf);
+
+            const m = msgEl;
+            msgEl = null;
+
+            if (!m) return;
+
+            if (imediato) {
+                m.remove();
+                return;
+            }
+
+            m.classList.add('kx-saindo');
+            setTimeout(() => m.remove(), 450);
+        }
+
+        // tipo: 'sussurro' | 'alerta' | 'grito'
+        function mensagem(tipo, texto, opc = {}) {
+            const c = camada();
+
+            // uma mensagem por vez (inclusive as que ainda estão sumindo)
+            limparMensagem(true);
+            c.querySelectorAll('.kx-msg').forEach(x => x.remove());
+
+            const m = criar('div', 'kx-msg kx-msg--' + tipo);
+            const real = criar('span', 'kx-sr');             // texto real, para leitores de tela
+            const vis = criar('span', 'kx-txt');             // texto animado (decorativo)
+
+            m.setAttribute('role', 'status');
+            vis.setAttribute('aria-hidden', 'true');
+
+            if (tipo === 'alerta') {
+                const cab = criar('small', 'kx-cab', '⚠ ALERTA DO SISTEMA');
+                cab.setAttribute('aria-hidden', 'true');
+                m.append(cab);
+            }
+
+            m.append(real, vis);
+
+            if (opc.sub) {
+                const s = criar('small', 'kx-sub', opc.sub);
+                s.setAttribute('aria-hidden', 'true');
+                m.append(s);
+            }
+
+            c.append(m);
+            msgEl = m;
+
+            requestAnimationFrame(() => { real.textContent = texto; });
+            decodificar(vis, texto);
+
+            msgTimer = setTimeout(() => {
+                m.classList.add('kx-saindo');
+                setTimeout(() => {
+                    if (msgEl === m) msgEl = null;
+                    m.remove();
+                }, 450);
+            }, opc.duracao || 2800);
+        }
+
+        // ---- Efeitos visuais ----
+
+        // escurece e volta (UMA vez, suave: sem piscar rápido)
+        function lampejo(c, cor, opacidade, dur) {
+            const f = criar('div', 'kx-flash');
+            f.style.background = cor;
+            c.append(f);
+
+            anima(f, [{ opacity: 0 }, { opacity: opacidade, offset: .35 }, { opacity: 0 }],
+                { duration: dur, easing: 'ease-in-out' }, true);
+        }
+
+        // faixas horizontais deslocadas, como sinal de TV falhando
+        function fatias(c, qtd, forca) {
+            for (let i = 0; i < qtd; i++) {
+                const f = criar('i', 'kx-fatia');
+                const dx = sorteio(-1, 1) * (20 + forca * 46);
+
+                f.style.top = sorteio(0, 96) + '%';
+                f.style.height = sorteio(2, 8 + forca * 16) + 'px';
+                f.style.background = Math.random() < .55 ? 'rgba(229,9,20,.55)' : 'rgba(0,229,255,.26)';
+                c.append(f);
+
+                anima(f, [
+                    { transform: 'translateX(0)', opacity: 0 },
+                    { transform: `translateX(${dx}px)`, opacity: 1, offset: .3 },
+                    { transform: `translateX(${-dx * .6}px)`, opacity: .8, offset: .62 },
+                    { transform: 'translateX(0)', opacity: 0 }
+                ], { duration: sorteio(180, 520), delay: sorteio(0, 260), easing: 'steps(4,end)' }, true);
+            }
+        }
+
+        // o logotipo reage a cada clique (sozinho no modo "menos movimento")
+        function logoReage(logo, nivel) {
+            if (!logo.animate) return;
+
+            const f = nivel / EGG1.ALVO;
+
+            logo.animate(
+                [
+                    { filter: `drop-shadow(0 0 ${6 + nivel * 3}px #e50914) brightness(${1 + f * .5})` },
+                    { filter: 'none' }
+                ],
+                { duration: 650, easing: 'ease-out' }
+            );
+
+            if (calmo()) return;
+
+            const t = 1 + nivel * .7;
+
+            logo.animate(
+                [
+                    { transform: 'translate(0,0)' },
+                    { transform: `translate(${-t}px,${t / 2}px)` },
+                    { transform: `translate(${t}px,${-t / 2}px)` },
+                    { transform: `translate(${-t / 2}px,0)` },
+                    { transform: 'translate(0,0)' }
+                ],
+                { duration: 380, easing: 'steps(5,end)' }
+            );
+
+            const b = logo.querySelector('b');
+
+            if (nivel >= 3 && b && b.animate) {
+                b.animate(
+                    [{ opacity: 1 }, { opacity: .25 }, { opacity: 1 }, { opacity: .5 }, { opacity: 1 }],
+                    { duration: 460 }
+                );
+            }
+
+            if (nivel >= 4) {
+                logo.animate(
+                    [
+                        { textShadow: '3px 0 #00e5ff, -3px 0 #e50914' },
+                        { textShadow: 'none' }
+                    ],
+                    { duration: 420 }
+                );
+            }
+        }
+
+        // Um nível = um conjunto de efeitos. Mensagens só nos níveis 2, 4, 6 e 9.
+        function efeito(logo, nivel) {
+            const c = camada();
+
+            // cada clique é um momento novo: a mensagem do clique anterior sai de cena
+            limparMensagem();
+
+            // a vinheta escura cresce com o nível
+            c.style.setProperty('--kx-n', Math.min(1, nivel / EGG1.ALVO).toFixed(2));
+
+            logoReage(logo, nivel);
+
+            const movimento = !calmo();
+
+            switch (nivel) {
+                case 1:                                                   // lampejo misterioso
+                    if (movimento) lampejo(c, '#000', .5, 800);
+                    break;
+
+                case 2:                                                   // sussurro enigmático
+                    if (movimento) lampejo(c, '#e50914', .16, 900);
+                    mensagem('sussurro', 'Você ouviu isso? A vassoura… varrendo.', { duracao: 3200 });
+                    break;
+
+                case 3:                                                   // glitch + coração
+                    c.classList.add('kx-linhas-on');
+                    if (movimento) fatias(c, 6, .3);
+                    som.glitch();
+                    som.batida();
+                    break;
+
+                case 4:                                                   // alerta de vírus
+                    if (movimento) fatias(c, 7, .45);
+                    mensagem('alerta', 'Vírus detectado. Deseja continuar?', {
+                        sub: 'Clique em KARFLIX para continuar',
+                        duracao: 3400
+                    });
+                    som.alerta();
+                    if (window.KARFLIX_AQUECER) window.KARFLIX_AQUECER();   // pré-carrega a Bruxa
+                    break;
+
+                case 5:                                                   // glitch forte
+                    if (movimento) {
+                        fatias(c, 10, .65);
+                        lampejo(c, '#e50914', .22, 800);
+                    }
+                    som.glitch();
+                    som.batida();
+                    break;
+
+                case 6:                                                   // "corrupção"
+                    if (movimento) {
+                        fatias(c, 18, 1);
+                        lampejo(c, '#e50914', .3, 900);
+                    }
+                    mensagem('alerta', 'Se você continuar, vai corromper o seu dispositivo.', {
+                        sub: 'Clique em KARFLIX para continuar',
+                        duracao: 3600
+                    });
+                    som.glitch();
+                    setTimeout(som.glitch, 200);
+                    break;
+
+                case 7:                                                   // as barras de cinema fecham
+                    c.classList.add('kx-cine');
+                    if (movimento) fatias(c, 9, .8);
+                    som.batida();
+                    break;
+
+                case 8:                                                   // quase lá
+                    if (movimento) {
+                        fatias(c, 12, .9);
+                        lampejo(c, '#000', .55, 900);
+                    }
+                    som.batida();
+                    setTimeout(som.batida, 420);
+                    break;
+
+                case 9:                                                   // apagão (o título continua aceso)
+                    c.classList.add('kx-apagao');
+                    mensagem('grito', 'Você foi avisado.', { duracao: 4200 });
+                    som.grave();
+                    break;
+            }
+        }
+
+        // ---- 10º clique: abre a Bruxa de 71 ----
+
+        function abrirBruxa() {
+            travado = true;
+            clearTimeout(idle);
+            limparMensagem();
+
+            const c = camada();
+
+            if (!calmo()) lampejo(c, '#e50914', .55, 700);
+            som.grave();
+
+            // porta animada do script.js; sem ela, vai direto para a página secreta
+            if (typeof window.KARFLIX_PORTA === 'function') {
+                window.KARFLIX_PORTA();
+            } else {
+                location.hash = EGG1.ROTA;
+            }
+
+            // a porta (z-index maior) já cobre a tela: tiramos os efeitos por baixo dela
+            setTimeout(removerCamada, 800);
+
+            // libera tudo depois que a transição acabou
+            setTimeout(() => {
+                travado = false;
+                n = 0;
+                removerCamada();
+            }, 4200);
+        }
+
+        // ---- Escuta de cliques (um único listener) ----
+        // Fase de captura para podermos cancelar o link só no 10º clique.
+        // Nos cliques 1–9 NADA é cancelado: o título continua levando ao início.
+
+        document.addEventListener('click', e => {
+            const logo = e.target.closest && e.target.closest(ALVO_SEL);
+
+            if (!logo || travado || estado.video) return;
+            if (comModificador(e) || cliqueRepetido(e)) return;
+
+            const agora = Date.now();
+
+            n = agora - ultimo > EGG1.PAUSA_MAX ? 1 : n + 1;
+            ultimo = agora;
+
+            clearTimeout(idle);
+
+            if (n >= EGG1.ALVO) {
+                e.preventDefault();
+                abrirBruxa();
+                return;
+            }
+
+            idle = setTimeout(reiniciar, EGG1.PAUSA_MAX);
+            efeito(logo, n);
+        }, true);
+
+        // voltar pelo navegador (bfcache) não pode trazer os efeitos de volta
+        addEventListener('pageshow', e => {
+            if (e.persisted) {
+                travado = false;
+                n = 0;
+                removerCamada();
+            }
+        });
+
+        return { reiniciar };
+    })();
+
+
+    /* =====================================================
+       EGG 2 · "Sobre o Projeto" ×5 → vídeo na PRÓXIMA navegação
+       ===================================================== */
+
+    const video = (() => {
+        const SOBRE_SEL = '#menu a[data-id="sobre"], #nav-inferior a[data-id="sobre"]';
+        const MENU_SEL = '#menu a, #nav-inferior a, #topo .logo';
+
+        let n = 0;
+        let ultimo = 0;
+        let timerMostrar = null;
+        let aquecimento = null;  // <video> invisível que já vai baixando o arquivo
+        let el = null;           // tela especial (#kx-video)
+        let vid = null;          // <video> com o arquivo local
+        let foco = null;         // elemento focado antes de abrir
+        let overflowAnterior = '';
+        let tocando = false;
+
+        const desbloqueado = () => sessao.ler(K.desbloqueado) === '1';
+        const exibido = () => sessao.ler(K.exibido) === '1';
+
+        // ---- Aquecimento: baixa o arquivo em silêncio, antes da hora ----
+
+        function aquecer() {
+            if (aquecimento) return;
+
+            try {
+                aquecimento = document.createElement('video');
+                aquecimento.preload = 'auto';
+                aquecimento.muted = true;
+                aquecimento.src = EGG2.VIDEO;
+            } catch (_) {
+                aquecimento = null;
+            }
+        }
+
+        function soltarAquecimento() {
+            if (!aquecimento) return;
+
+            aquecimento.removeAttribute('src');
+
+            try { aquecimento.load(); } catch (_) { /* segue */ }
+
+            aquecimento = null;
+        }
+
+        // ---- 1) Contagem e desbloqueio silencioso ----
+
+        function desbloquear(link) {
+            sessao.gravar(K.desbloqueado, '1');
+
+            // página onde o 5º clique termina: chegar nela NÃO conta como "próxima navegação"
+            sessao.gravar(K.base, (link.hash || '#sobre').slice(1));
+
+            // começa a baixar o vídeo sem mostrar nada
+            aquecer();
+        }
+
+        document.addEventListener('click', e => {
+            const alvo = e.target.closest && e.target.closest(MENU_SEL);
+
+            if (!alvo) return;
+
+            // clicar em outro item do menu quebra a sequência
+            if (!alvo.matches(SOBRE_SEL)) {
+                n = 0;
+                return;
+            }
+
+            if (desbloqueado() || exibido()) return;
+            if (comModificador(e) || cliqueRepetido(e)) return;
+
+            const agora = Date.now();
+
+            n = agora - ultimo > EGG2.PAUSA_MAX ? 1 : n + 1;
+            ultimo = agora;
+
+            if (n === EGG2.ALVO) desbloquear(alvo);   // sem animação, sem aviso
+        }, true);
+
+        // ---- 2) Detecta a PRÓXIMA navegação interna ----
+        // O site navega por hash (sem recarregar). Este listener foi registrado
+        // depois do rotear() do script.js, então roda quando a nova tela já está pronta.
+
+        addEventListener('hashchange', () => {
+            if (!desbloqueado() || exibido() || estado.video) return;
+
+            if (rotaAtual() === sessao.ler(K.base)) return;        // navegação do próprio 5º clique
+
+            clearTimeout(timerMostrar);
+            timerMostrar = setTimeout(mostrar, EGG2.ATRASO);
+        });
+
+        // ---- 3) Tela especial ----
+
+        function mostrar() {
+            // não colide com o Egg 1 nem com a Bruxa: fica pendente para a próxima navegação
+            if (!desbloqueado() || exibido() || estado.video) return;
+            if (estado.suspenso() || rotaAtual() === EGG1.ROTA || rotaAtual() === sessao.ler(K.base)) return;
+
+            sessao.gravar(K.exibido, '1');          // nunca mais nesta sessão
+            estado.video = true;
+
+            foco = document.activeElement;
+            overflowAnterior = document.documentElement.style.overflow;
+            document.documentElement.style.overflow = 'hidden';
+            tocando = false;
+
+            el = criar('div');
+            el.id = 'kx-video';
+            el.tabIndex = -1;
+            el.setAttribute('role', 'dialog');
+            el.setAttribute('aria-modal', 'true');
+            el.setAttribute('aria-label', 'Vídeo secreto do KARFLIX');
+            el.innerHTML = `
+                <div class="kx-v-fundo" aria-hidden="true"></div>
+                <div class="kx-v-barra kx-t" aria-hidden="true"></div>
+                <div class="kx-v-barra kx-b" aria-hidden="true"></div>
+                <button type="button" class="kx-v-fechar" aria-label="Fechar vídeo secreto">✕ Fechar</button>
+                <p class="kx-v-tag" aria-hidden="true"></p>
+                <div class="kx-v-moldura">
+                    <video class="kx-v-video" controls playsinline preload="auto"></video>
+                    <button type="button" class="kx-v-play" hidden>▶ Toque para assistir</button>
+                    <p class="kx-v-erro" role="alert" hidden></p>
+                </div>
+                <p class="kx-v-dica">Você encontrou o segredo do KARFLIX.</p>
+            `;
+
+            document.body.append(el);
+
+            // título "decodificando", igual às mensagens do Egg 1
+            const tag = el.querySelector('.kx-v-tag');
+            const frase = 'TRANSMISSÃO SECRETA INTERCEPTADA';
+
+            if (calmo()) {
+                tag.textContent = frase;
+            } else {
+                const ini = performance.now();
+                const G = '█▓▒░#@%&$?!';
+                const passo = agora => {
+                    if (!el) return;
+                    const p = Math.min(1, (agora - ini) / 1100);
+                    const fixos = Math.floor(frase.length * p);
+                    let out = '';
+
+                    for (let i = 0; i < frase.length; i++) {
+                        out += (i < fixos || frase[i] === ' ') ? frase[i] : G[(Math.random() * G.length) | 0];
+                    }
+
+                    tag.textContent = out;
+                    if (p < 1) requestAnimationFrame(passo);
+                };
+                requestAnimationFrame(passo);
+            }
+
+            el.querySelector('.kx-v-fechar').addEventListener('click', fechar);
+            el.querySelector('.kx-v-play').addEventListener('click', tocarManual);
+            addEventListener('keydown', teclas, true);
+
+            el.querySelector('.kx-v-fechar').focus({ preventScroll: true });
+
+            iniciarVideo();
+        }
+
+        function iniciarVideo() {
+            vid = el.querySelector('.kx-v-video');
+
+            vid.addEventListener('playing', () => {
+                tocando = true;
+                esconderPlay();
+            });
+
+            vid.addEventListener('error', () => erro('Não foi possível carregar o vídeo agora.'));
+
+            vid.src = EGG2.VIDEO;
+
+            // tenta tocar sozinho (com som); se o navegador bloquear, mostra o botão
+            const p = vid.play();
+
+            if (p && typeof p.catch === 'function') {
+                p.catch(err => {
+                    const nome = err && err.name;
+
+                    // fechou antes de começar / arquivo com problema (o evento 'error' avisa)
+                    if (nome === 'AbortError' || nome === 'NotSupportedError') return;
+
+                    mostrarPlay();
+                });
+            }
+        }
+
+        // autoplay com áudio bloqueado → botão para iniciar manualmente
+        function mostrarPlay() {
+            const b = el && el.querySelector('.kx-v-play');
+            const e = el && el.querySelector('.kx-v-erro');
+
+            if (b && !tocando && !(e && !e.hidden)) b.hidden = false;
+        }
+
+        function esconderPlay() {
+            const b = el && el.querySelector('.kx-v-play');
+            if (b) b.hidden = true;
+        }
+
+        // o clique do visitante é o "gesto" que os navegadores exigem
+        function tocarManual() {
+            if (!vid) return;
+
+            vid.muted = false;
+
+            const p = vid.play();
+
+            if (p && typeof p.catch === 'function') {
+                p.catch(() => { /* os controles do próprio vídeo continuam disponíveis */ });
+            }
+
+            esconderPlay();
+        }
+
+        function erro(texto) {
+            if (!el) return;
+
+            const p = el.querySelector('.kx-v-erro');
+            p.textContent = texto;
+            p.hidden = false;
+
+            esconderPlay();
+        }
+
+        // Esc fecha; Tab fica preso dentro da tela especial
+        function teclas(e) {
+            if (!el) return;
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                fechar();
+                return;
+            }
+
+            if (e.key !== 'Tab') return;
+
+            const itens = [...el.querySelectorAll('button:not([hidden]), a[href], video')];
+
+            if (!itens.length) return;
+
+            const primeiro = itens[0];
+            const ultimo = itens[itens.length - 1];
+            const atual = document.activeElement;
+
+            if (e.shiftKey && (atual === primeiro || !el.contains(atual))) {
+                e.preventDefault();
+                ultimo.focus();
+            } else if (!e.shiftKey && (atual === ultimo || !el.contains(atual))) {
+                e.preventDefault();
+                primeiro.focus();
+            }
+        }
+
+        function fechar() {
+            if (!el) return;
+
+            const tela = el;
+            el = null;
+
+            // para o vídeo na hora (o fade-out leva 450 ms e o som não pode continuar)
+            if (vid) {
+                vid.pause();
+                vid.removeAttribute('src');
+
+                try { vid.load(); } catch (_) { /* segue */ }
+
+                vid = null;
+            }
+
+            soltarAquecimento();
+
+            tela.classList.add('kx-saindo');
+            setTimeout(() => tela.remove(), 450);
+
+            removeEventListener('keydown', teclas, true);
+            document.documentElement.style.overflow = overflowAnterior;
+            estado.video = false;
+
+            if (foco && foco.focus) foco.focus({ preventScroll: true });
+        }
+
+        return { fechar };
+    })();
 })();
