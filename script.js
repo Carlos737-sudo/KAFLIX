@@ -1774,7 +1774,7 @@ rotear();
     };
 
     const EGG2 = {
-        ALVO: 5,                 // cliques em "Sobre o Projeto"
+        ALVO: 1,                 // cliques em "Sobre o Projeto"
         PAUSA_MAX: 3500,         // ms entre cliques seguidos
         VIDEO: 'videos/segredo.mp4',   // arquivo do vídeo secreto (pasta videos/)
         ATRASO: 450              // ms após a navegação até a tela especial
