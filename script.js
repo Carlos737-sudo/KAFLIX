@@ -140,6 +140,29 @@ const FILMES = [
         posicao: '50% 50%',
         ajuste: 'cover',
         disponivel: true
+    },
+
+    {
+        id: 'groot',
+        adicionadoEm: '2026-11-25',
+        titulo: 'Eu Sou Groot: A Erva da Resenha',
+        sinopse: 'No coração de uma floresta encantada, o guardião mais simpático da galáxia descansa sobre uma pedra com a sua fita favorita. Ele só diz uma frase, mas para quem entende, cada “Eu sou Groot” rende uma resenha inteira.',
+        genero: ['Comédia', 'Aventura'],
+        ano: 2026,
+        classificacao: 'L',
+        capa: 'imagens/banners/groot.png',
+        banner: 'imagens/banners/groot.png',
+        cenario: 'imagens/banners/groot.png',
+        video: 'videos/groot.mp4',
+        duracao: '1h 10min',
+        corPrincipal: '#e8a33d',
+        corSecundaria: '#2f5d2a',
+        efeito: 'poeira',
+        fonte: "'Fredoka',sans-serif",
+        popularidade: 94,
+        posicao: '50% 40%',
+        ajuste: 'cover',
+        disponivel: true
     }
 ];
 
@@ -360,7 +383,6 @@ function cartao(f) {
 
 const ITENS = [
     ['index', 'Início', 'index.html', '🏠', 'Início'],
-    ['catalogo', 'Catálogo', 'pages/catalogo.html', '🎞️', 'Catálogo'],
     ['generos', 'Gêneros', 'pages/generos.html', '🎭', 'Gêneros'],
     ['novidades', 'Novidades', 'pages/novidades.html', '✨', 'Novidades'],
     ['minha-lista', 'Minha Lista', 'pages/minha-lista.html', '🔖', 'Lista'],
@@ -417,12 +439,6 @@ const ROTA = c =>
     b.addEventListener('input', () =>
         window.aoBuscar && window.aoBuscar(b.value)
     );
-
-    b.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !window.aoBuscar) {
-            location.hash = 'catalogo';
-        }
-    });
 
     btn.onclick = () =>
         btn.setAttribute('aria-expanded', h.classList.toggle('aberto'));
@@ -879,74 +895,6 @@ function iniciarCarrossel() {
 
 
 /* ==========================================================
-   PÁGINA CATÁLOGO
-   ========================================================== */
-
-function iniciarCatalogo() {
-    const g = $('#fg');
-    const a = $('#fa');
-    const o = $('#fo');
-    const grade = $('#grade-cat');
-    const vazio = $('#vazio-cat');
-
-    const norm = s =>
-        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-    let busca = $('#busca').value;
-
-    g.innerHTML =
-        '<option value="">Todos os gêneros</option>' +
-        [...new Set(FILMES.flatMap(f => f.genero))]
-            .sort()
-            .map(x => `<option>${x}</option>`)
-            .join('');
-
-    a.innerHTML =
-        '<option value="">Todos os anos</option>' +
-        [...new Set(FILMES.map(f => f.ano))]
-            .sort((x, y) => y - x)
-            .map(x => `<option>${x}</option>`)
-            .join('');
-
-    g.value = '';
-
-
-    function render() {
-        const l = FILMES.filter(f =>
-            (!g.value || f.genero.includes(g.value)) &&
-            (!a.value || f.ano == a.value) &&
-            norm(f.titulo + ' ' + f.genero.join(' ') + ' ' + f.sinopse).includes(norm(busca))
-        );
-
-        l.sort(
-            o.value === 'az'
-                ? (x, y) => x.titulo.localeCompare(y.titulo)
-                : o.value === 'ano'
-                    ? (x, y) => y.ano - x.ano
-                    : (x, y) => y.popularidade - x.popularidade
-        );
-
-        grade.innerHTML = l.map(cartao).join('');
-
-        vazio.hidden = l.length > 0;
-
-        $('#contagem').textContent =
-            `${l.length} ${l.length === 1 ? 'filme' : 'filmes'}`;
-    }
-
-
-    window.aoBuscar = v => {
-        busca = v;
-        render();
-    };
-
-    [g, a, o].forEach(e => e.onchange = render);
-
-    render();
-}
-
-
-/* ==========================================================
    PÁGINA GÊNEROS
    ========================================================== */
 
@@ -1087,8 +1035,8 @@ function iniciarDetalhe(id) {
 
                 <p>Este filme não existe ou foi removido.</p>
 
-                <a class="btn" href="#catalogo">
-                    Ver catálogo
+                <a class="btn" href="#inicio">
+                    Voltar ao início
                 </a>
 
             </div>
@@ -1296,7 +1244,6 @@ const INICIAR = {
         return iniciarCarrossel();
     },
 
-    catalogo: iniciarCatalogo,
     generos: iniciarGeneros,
     novidades: iniciarNovidades,
     'minha-lista': iniciarLista,
